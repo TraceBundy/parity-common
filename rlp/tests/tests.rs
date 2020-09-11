@@ -13,6 +13,30 @@ use primitive_types::{H160, U256};
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 
 #[test]
+fn test_sign() {
+	let cases: Vec<i128> = vec![-123, -456789, -1234567890, -12345678901234, 234, 567, 89000];
+	for i in cases.iter() {
+		let j: i128 = rlp::decode(&rlp::encode(i)).unwrap();
+		assert_eq!(i, &j);
+	}
+}
+#[test]
+fn test_f32() {
+	let cases: Vec<f32> = vec![-123.11, -456789.123, -1234567890.456, 234.1, 567.345, 89000.456];
+	for i in cases.iter() {
+		let j: f32 = rlp::decode(&rlp::encode(i)).unwrap();
+		assert_eq!(i, &j);
+	}
+}
+#[test]
+fn test_f64() {
+	let cases: Vec<f64> = vec![-123.11, -456789.123, -1234567890.456, 234.1, 567.345, 89000.456, 12345678901345.123];
+	for i in cases.iter() {
+		let j: f64 = rlp::decode(&rlp::encode(i)).unwrap();
+		assert_eq!(i, &j);
+	}
+}
+#[test]
 fn test_rlp_display() {
 	let data = hex!("f84d0589010efbef67941f79b2a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
 	let rlp = Rlp::new(&data);

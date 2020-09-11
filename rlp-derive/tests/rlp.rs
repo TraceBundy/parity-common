@@ -18,7 +18,11 @@ struct Item {
 struct ItemWrapper {
 	a: String,
 }
-
+#[test]
+fn test_128() {
+	let i : i128 = 10;
+	println!("{}", i.to_be_bytes().len());
+}
 #[test]
 fn test_encode_item() {
 	let item = Item { a: "cat".into() };

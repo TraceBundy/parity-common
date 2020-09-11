@@ -170,10 +170,12 @@ macro_rules! impl_decodable_for_u {
 impl_encodable_for_u!(u16);
 impl_encodable_for_u!(u32);
 impl_encodable_for_u!(u64);
+impl_encodable_for_u!(u128);
 
 impl_decodable_for_u!(u16);
 impl_decodable_for_u!(u32);
 impl_decodable_for_u!(u64);
+impl_decodable_for_u!(u128);
 
 impl Encodable for usize {
 	fn rlp_append(&self, s: &mut RlpStream) {
@@ -210,3 +212,73 @@ impl Decodable for String {
 		})
 	}
 }
+
+macro_rules! impl_encodable_for_i {
+	($name: ident) => {
+		impl Encodable for $name {
+			fn rlp_append(&self, s: &mut RlpStream) {
+				let i = *self as i128;
+				let zigzag = ((i << 1) ^ (i >> 127)) as u128;
+				let leading_empty_bytes = zigzag.leading_zeros() as usize / 8;
+				let buffer = zigzag.to_be_bytes();
+				s.encoder().encode_value(&buffer[leading_empty_bytes..]);
+			}
+		}
+	};
+}
+
+macro_rules! impl_decodable_for_i {
+	($name: ident) => {
+		impl Decodable for $name {
+			fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+				match u128::decode(rlp) {
+					Ok(res) => {
+						let recover = ((res >> 1) ^ (-((res & 1) as i128)) as u128) as $name;
+						Ok(recover)
+					}
+					Err(err) => Err(err),
+				}
+			}
+		}
+	};
+}
+
+impl_encodable_for_i!(i8);
+impl_encodable_for_i!(i16);
+impl_encodable_for_i!(i32);
+impl_encodable_for_i!(i64);
+impl_encodable_for_i!(i128);
+
+impl_decodable_for_i!(i8);
+impl_decodable_for_i!(i16);
+impl_decodable_for_i!(i32);
+impl_decodable_for_i!(i64);
+impl_decodable_for_i!(i128);
+
+macro_rules! impl_encodable_for_f {
+	($name: ident, $value : ident) => {
+		impl Encodable for $name {
+			fn rlp_append(&self, s: &mut RlpStream) {
+				let num = $value::from_be_bytes(self.to_bits().to_be_bytes());
+				num.rlp_append(s);
+			}
+		}
+	};
+}
+
+macro_rules! impl_decodable_for_f {
+	($name: ident, $value : ident) => {
+		impl Decodable for $name {
+			fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+				match $value::decode(rlp) {
+					Ok(num) => Ok($name::from_bits(num)),
+					Err(err) => Err(err),
+				}
+			}
+		}
+	};
+}
+impl_encodable_for_f!(f32, u32);
+impl_decodable_for_f!(f32, u32);
+impl_encodable_for_f!(f64, u64);
+impl_decodable_for_f!(f64, u64);
